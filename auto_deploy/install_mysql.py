@@ -60,8 +60,9 @@ def init_srv(para_list):
 
 def init_mysql(para_list):
     schema = 'root'
+    sql_dir = para_list[0]
     if len(para_list) > 1:
-        sql_dir, schema = para_list[0], para_list[1]
+       schema = para_list[1]
     mysqlexe = fileloc(mysql_install_dir, 'mysql.exe')
     try:
         for path, subdir, file in (os.walk(sql_dir)):
@@ -71,7 +72,7 @@ def init_mysql(para_list):
                     cmd = mysqlexe + " -u " + schema  + " <" + fullname
                     rtn = os.system(cmd)
                     if not rtn:
-                        print("run ", sql_dir, "sql files successful")
+                        print("run ", fullname, "sql files successful.\n\n")
     except Exception as e:
         print("failed exec create_db sql")
 
@@ -102,7 +103,7 @@ def cmd_menu():
     menu = {}   #菜单调用
     menu['1'] = [ mysql_install, 'zip包名', '安装目录']  
     menu['2'] = [ init_srv, 'mysql服务名', '配置文件地址']
-    menu['3'] = [ init_mysql, '脚本路径', '执行schema']
+    menu['3'] = [ init_mysql, '脚本路径']
     menu['4'] = [ init_mysql, '脚本路径', '执行schema']
     menu['5'] = [ init_mysql, '脚本路径']
     menu['6'] = [ odbc_setup, 'odbc包名', '安装路径']
@@ -111,10 +112,10 @@ def cmd_menu():
     while True:
         print("1. zip包安装")
         print("2. 初始化mysql服务")
-        print("2. 数据库及用户 exec as root")        #需脚本路径
-        print("3. 数据库初始化 exec as schema")      #需脚本路径 和 schema名
-        print("4. schema密码初始化")
-        print("5. odbc 配置")
+        print("3. 数据库及用户 exec as root")        #需脚本路径
+        print("4. 数据库初始化 exec as schema")      #需脚本路径 和 schema名
+        print("5. schema密码初始化")
+        print("6. odbc 配置")
         
 
         
