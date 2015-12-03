@@ -24,10 +24,20 @@ def extract_zip(para_list):
     return 0
 
 def mysql_install(para_list):
+    '''
+    外壳脚本，为了保存输入的mysql安装路径, 
+    '''
     if len(para_list) > 1:
         package, setup_dir = para_list[0], para_list[1]
     global mysql_install_dir
     mysql_install_dir = setup_dir
+    extract_zip(para_list)
+    
+def odbc_install(para_list):
+    if len(para_list) > 1:
+        package, setup_dir = para_list[0], para_list[1]
+    global odbc_install_dir
+    odbc_install_dir = setup_dir
     extract_zip(para_list)
     
 def init_srv(para_list):
@@ -69,7 +79,7 @@ def init_mysql(para_list):
             for f in file:
                 if f.endswith('sql'):
                     fullname = os.path.join(path, f)
-                    cmd = mysqlexe + " -u " + schema  + " <" + fullname
+                    cmd = mysqlexe + " -u " + schema  + " <" + fullname         #无密码执行sql
                     rtn = os.system(cmd)
                     if not rtn:
                         print("run ", fullname, "sql files successful.\n\n")
@@ -78,7 +88,25 @@ def init_mysql(para_list):
 
 def odbc_setup():
     pass
-
+    if not odbc_install_dir:
+        print("not found odbc install directory,install first")
+        return
+    odbcexe = fileloc(odbc_install_dir, 'myodbc-installer.exe')
+    try:
+        print("/n/n")
+        
+        cmd = odbcexe + " -d  -l "
+        os.system(cmd)
+        print()
+        driver = os.input("请选取需配置驱动:")
+        name = os.input("odbc配置名:")
+        port = os.input("port:")
+        db = os.input("database name:")
+        user = os.input("user:")
+        pas  = os.input("password:")
+        odbc_str = (odbcexe, '-s -a -c1 -n', name, '-t', '"DRIVER=', driver, ';SERVER=localhost;', 'PORT=', port, ';DATABASE=', db, ';UID=', user, ';PWD=', pas, '"' )
+        
+        
 
 def fileloc(target_dir, file):
     for path, subpath, files in (os.walk(target_dir)):
@@ -130,4 +158,5 @@ def cmd_menu():
             
 if __name__ == '__main__':
     mysql_install_dir = 'c:\\mysql5'
+    odbc_install_dir = 'c:\\odbc32'
     cmd_menu()
