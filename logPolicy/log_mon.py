@@ -42,28 +42,31 @@ class LogPolicy():
         return match
 
 if __name__ == '__main__':
-    log_policy = { 'short_p': {'gz': 7, 'retain': 7},
-                   'normal_p': {'gz': 7, 'retain': 30},
-                   'middle_p': {'gz': 7, 'retain': 60},
-                   'long_p': { 'gz': 7, 'retain': 90}
+    log_policy = { 'tmp_p': {'gz': -1, 'retain': 7},
+                   '1mon_p': {'gz': 12, 'retain': 30},
+                   '2mon_p': {'gz': 12, 'retain': 60},
+                   '3mon_p': { 'gz': 30, 'retain': 90}
                     }
-    log_group = [['/data/tomcatapp/apache-tomcat-7.0.57/logs', log_policy['long_p']],
-                 ['/data/tomcatapp/apache-tomcat-7.0.57/temp', log_policy['short_p']],
-                 ['/data/vlogs/ios/exception', log_policy['normal_p']],
-                 ['/data/vlogs/ios/show', log_policy['long_p']],
-                 ['/data/vlogs/android/show', log_policy['long_p']],
-                 ['/data/vlogs/android/fsshow', log_policy['long_p']],
-                 ['/data/vlogs/send_url', log_policy['middle_p']],
-                 ['/data/vlogs/send_exception', log_policy['long_p']]
+    log_group = [
+                 ['/data/tomcatapp/apache-tomcat-7.0.57/temp', log_policy['tmp_p']],
+                 ['/data/tomcatapp/apache-tomcat-7.0.57/logs', log_policy['3mon_p']],                 
+                 ['/data/vlogs/ios/exception', log_policy['3mon_p']],
+                 ['/data/vlogs/ios/show', log_policy['3mon_p']],
+                 ['/data/vlogs/android/show', log_policy['3mon_p']],
+                 ['/data/vlogs/android/fsshow', log_policy['3mon_p']],
+                 ['/data/vlogs/send_url', log_policy['3mon_p']],
+                 ['/data/vlogs/send_exception', log_policy['3mon_p']],
                 ]
 
     local_dir = os.path.dirname(os.path.abspath(__file__))            
+    if os.path.isfile(os.path.join(local_dir, 'log_mon.log')):
+        os.unlink(os.path.join(local_dir, 'log_mon.log')) 
     logging.basicConfig(level = logging.DEBUG,
                         format = '%(asctime)s [line:%(lineno)d] [%(levelname)s] %(message)s',
                         datefmt = '%Y-%m-%d %H:%M:%S',
                         filename = os.path.join(local_dir, 'vpn.log'),
                         filemode = 'a')
-    _OUT = False
+    _OUT = False    #when True write logs
 
     ## log file datetime pattern, use it to get the file create date
     patt = re.compile(r'(\d{4})-(\d{2})-(\d{2})')
@@ -77,11 +80,16 @@ if __name__ == '__main__':
                 if file_rules.get('retain'):
                     if _OUT:
                         logging.info("read to delete: " + logfile)
-                    os.unlink(logfile)
+                    try:
+                        os.unlink(logfile)
+                    except OSError as e:
+                        logging.error("cannot delete: " + logfile + " (" + e + ")")
                     continue
                 if file_rules.get('gz'):
                     if not logfile.endswith('gz'):
                         if _OUT:
                             logging.info("read to gzip: " + logfile)
-                        os.system("/bin/gzip " + logfile)
+                        rt = os.system("/bin/gzip " + logfile)
+                        if rt:
+                            logging.error("gzip error: " + logfile)
 
