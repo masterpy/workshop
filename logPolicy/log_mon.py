@@ -41,7 +41,13 @@ class LogPolicy():
                 match[k] = True
         return match
 
+def send_email(mail_title, mail_body=' '):
+    mail_act = '/usr/local/bin/sendEmail -f jiance@adwo.com -t liujianbo@adwo.com -s mail.adwo.com -u ' + \
+                    '"' + mail_title + '"' + ' -m ' + '"' + mail_body + '"' + ' -xu jiance@adwo.com -xp adwo8888'
+    os.system(mail_act)
+
 if __name__ == '__main__':
+
     log_policy = { 'tmp_p': {'gz': -1, 'retain': 7},
                    '1mon_p': {'gz': 12, 'retain': 30},
                    '2mon_p': {'gz': 12, 'retain': 60},
@@ -58,15 +64,16 @@ if __name__ == '__main__':
                  ['/data/vlogs/send_exception', log_policy['3mon_p']],
                 ]
 
-    local_dir = os.path.dirname(os.path.abspath(__file__))            
+    local_dir = os.path.dirname(os.path.abspath(__file__)) 
     if os.path.isfile(os.path.join(local_dir, 'log_mon.log')):
-        os.unlink(os.path.join(local_dir, 'log_mon.log')) 
+        os.unlink(os.path.join(local_dir, 'log_mon.log'))           
     logging.basicConfig(level = logging.DEBUG,
                         format = '%(asctime)s [line:%(lineno)d] [%(levelname)s] %(message)s',
                         datefmt = '%Y-%m-%d %H:%M:%S',
-                        filename = os.path.join(local_dir, 'vpn.log'),
+                        filename = os.path.join(local_dir, 'log_mon.log'),
                         filemode = 'a')
     _OUT = False    #when True write logs
+    need_email = False  # if True send email notice 
 
     ## log file datetime pattern, use it to get the file create date
     patt = re.compile(r'(\d{4})-(\d{2})-(\d{2})')
@@ -83,7 +90,8 @@ if __name__ == '__main__':
                     try:
                         os.unlink(logfile)
                     except OSError as e:
-                        logging.error("cannot delete: " + logfile + " (" + e + ")")
+                        logging.error("fail to delete for: " + str(e))
+                        need_email = True
                     continue
                 if file_rules.get('gz'):
                     if not logfile.endswith('gz'):
@@ -92,4 +100,12 @@ if __name__ == '__main__':
                         rt = os.system("/bin/gzip " + logfile)
                         if rt:
                             logging.error("gzip error: " + logfile)
-
+                            need_email = True
+    eth1ip = ''
+    if need_email:
+        try:
+            eth1ip = os.popen("/sbin/ip addr show eth1| grep inet |grep -v inet6 |awk '{print $2}' | awk -F/ {'print $1}'").read().strip()
+        except Exception:
+            exit(1)
+        finally:
+            send_email("log_mon run with error:" + eth1ip)
