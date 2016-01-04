@@ -15,8 +15,8 @@ class ProcessDir:
         every target directory has an dict file self (pickle), program will read it for process
         20160103: change struct of the dict
         object ={ 
-                'source' = '',
-                '_targethost' = '',
+                'source' = '',        # source directory
+                '_targethost' = '',   #when app run, this will point to single target
                 '_targetdir' = '',
                 '_dict' = {             #_dict will saved in local
                             'target' = [(target_host, target_dir),],        # one source map mulit target , different column means different rsync transcation
@@ -98,8 +98,10 @@ class ProcessDir:
                 del self._dict['synced'][expired_file]      # all rsync transaction have done
 
         # compare current with sent ok history)
-        new_list = current_snap - {k for k in self._dict['synced'].keys() if self._dict['synced'][k][sync_index]}
-        return new_list
+        incr_set = current_snap - {k for k in self._dict['synced'].keys() if self._dict['synced'][k][sync_index]}
+        incr_list = list(incr_set)
+        incr_list.sort()
+        return incr_list
 
     def process(self, rsyncobj, newlist=[]):
         '''
