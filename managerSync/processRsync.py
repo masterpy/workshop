@@ -3,7 +3,7 @@
 ## author:Jianblog
 ## date:2015-12-30
 
-import os, pickle, sys
+import os, pickle, sys, datetime
 import socket
 
 
@@ -32,11 +32,9 @@ class ProcessDir:
     '''
     def __init__(self, *argv):
         self._source = os.path.normpath(argv[0]) + os.path.sep
+        self._targethost, self._targetdir = argv[1:]
         
-        if len(argv) > 2:
-            self._targethost, self._targetdir = argv[1:]
-        
-        self.DICT_FILE = "syncedDict"
+        self.DICT_FILE = "sync.dict"
         dictFile = os.path.join(self._source, self.DICT_FILE)
 
         if os.path.isfile(dictFile):
@@ -54,11 +52,7 @@ class ProcessDir:
         cusdict['target'] = []
         cusdict['synced'] = {}
         
-        target_host, target_dir = '', ''
-        if len(argv) == 1:
-            target_host = argv[0]
-        if len(argv) > 1:
-            target_host, target_dir = argv
+        target_host, target_dir = argv
             
         if not target_host:
             target_host = input("please input the target host ip for rsync to: ")  or exit(1)
@@ -77,8 +71,8 @@ class ProcessDir:
                 
         if not target_dir:
             target_dir = input("please input the target sync dir module name for rsync to: ") or exit(1)
-        self._targethost, self._targetdir = target_host, target_dir
         
+        self._targethost, self._targetdir = target_host, target_dir
         cusdict['target'].append( (target_host, target_dir) )
         return cusdict
 
@@ -108,10 +102,17 @@ class ProcessDir:
             here need another object:processor  to solve the real work and return an ok list
         '''
         newlist = self.compareDiff()
+        with open(os.path.join(self._source, "rsync_history.log"), 'a') as f:
+            f.writelines("<Rsync Begin: " + str(datetime.datetime.today()) + ">\n")
         sent_ok = rsyncobj.syncList(newlist)
+        
+        with open(os.path.join(self._source, "rsync_history.log"), 'a') as f:
+            for file in sent_ok:
+                f.writelines(file + "\n")
+            f.writelines("<Rsync End: " + str(datetime.datetime.today()) + ">\n")    
+        
 
         self.updatelocalDict(sent_ok)       # call update
-
 
     def updatelocalDict(self, sent_list):
         '''
@@ -153,7 +154,8 @@ if __name__ == '__main__':
         dirpro = ProcessDir(sys.argv[1], sys.argv[2], sys.argv[3])
         dirpro.process(RsyncProc(dirpro._source, dirpro._targethost, dirpro._targetdir))
     else:
-        print("useage: python processFiles.py  directory")
+        print("useage: python processFiles.py  source_directory  target_host  target_dir")
+
 
 
 
