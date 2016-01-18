@@ -129,8 +129,9 @@ class ProcessBackup:
             line = line.strip().split()
             if len(line) == 5 and line[4] != '.':
                 current_snap.add(line[4])
-        for nofile in ( self.dict['records'].keys() - current_snap ):
-            del self.dict['records'][nofile]    #if file in local dict but not exist in fresh list, it can delete from dict
+        ## 20160116 dont delete history
+        #for nofile in ( self.dict['records'].keys() - current_snap ):
+        #    del self.dict['records'][nofile]    #if file in local dict but not exist in fresh list, it can delete from dict
         fresh_set = current_snap - {k for k in self.dict['records'].keys() if self.dict['records'][k][sync_index]}
         return fresh_set
 
@@ -206,7 +207,8 @@ class RsyncProc:
             if len(line.split()) > 1 or line.endswith("/"):
                 continue
             #if os.path.isfile(os.path.join(self.backup_dir, line)):
-            sent_ok.append(line)
+            if line:
+                sent_ok.append(line)
         return sent_ok
 
 
