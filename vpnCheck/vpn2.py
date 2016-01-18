@@ -1,4 +1,4 @@
-import os, re
+import os, re, sys, socket
 import logging
 class VpnClient:
     '''
@@ -11,7 +11,7 @@ class VpnClient:
         self.name = vpnname
         vpnaccount = self.getVpnbyName()
         if vpnaccount:
-            self._vpnserver, self._vpnuser, self._vpnpasswd = vpnaccount
+            self.vpnserver, self.vpnuser, self.vpnpasswd = vpnaccount
         else:
             exit(1)
         # init an log
@@ -23,6 +23,8 @@ class VpnClient:
             for line in f:
                 line = line.strip()
                 items = line.split("=")
+                k
+                    continue
                 dic_local[items[0]] = items[1]
         return dic_local
 
@@ -60,7 +62,7 @@ class VpnClient:
 
     def startVpn(self):
         conn_str = "/usr/sbin/pptpsetup --create " + self.name + " --server " + \
-                        self._vpnserver + " --username " + self._vpnuser + " --password " + self._vpnpasswd +" --start"
+                        self.vpnserver + " --username " + self.vpnuser + " --password " + self.vpnpasswd +" --start"
         err = Exception()
         try:
             vpn_conn = os.popen(conn_str).readlines()
@@ -99,7 +101,7 @@ class VpnClient:
         ## try twice with different api
         
         method1 = os.popen("curl -s -m 10 http://ad-bg.adwo.com/admin_v/api/ip.jsp").read()
-        hasip = self.searchip(method1):
+        hasip = self.searchip(method1)
         if hasip:
             return hasip
         method2 = os.popen("curl -s -m 10 http://www.ip.cn").read()
@@ -117,14 +119,18 @@ class VpnClient:
             return None
 
 if __name__ == '__main__':
+    LOCAL_DIR = os.path.dirname(os.path.abspath(__file__))
+
     if len(sys.argv) >= 1:
-        _stop_vpn, _start_vpn = sys.argv[:1]
+        _stop_vpn, _start_vpn = sys.argv[1:3]
     else:
         print("useage: app  stop_vpn  start_vpn")
+        exit(1)
 
-    localdic = vpnStoper.getLocalgw(os.path.join(localdir, 'ip.local'))
     vpnStoper = VpnClient(_stop_vpn)
-    stopvpnip = socket.gethostbyname(vpnStoper._vpnserver)
+    localdic = vpnStoper.getLocalgw(os.path.join(LOCAL_DIR, 'ip.local'))
+    
+    stopvpnip = socket.gethostbyname(vpnStoper.vpnserver)
 
     if vpnStoper.stopVpn():        
         vpnStoper.clearRoute(localdic['gatewayip'], stopvpnip)
@@ -134,7 +140,7 @@ if __name__ == '__main__':
     del vpnStoper
 
     vpnStarter = VpnClient(_start_vpn)
-    startvpnip = socket.gethostbyname(vpnStarter._vpnserver)
+    startvpnip = socket.gethostbyname(vpnStarter.vpnserver)
     rt, info = vpnStarter.startVpn()
     if rt:
         print("connect ok")
