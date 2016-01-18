@@ -9,7 +9,6 @@ import socket
     author: jianblog
     note: a shedule job after rsync, it's purpose is to update local rsync dict records. 
     to solve the problem: when rsync return file list, check it still not exist at the same time.  
-    so run this script after sync to update local dict.
 '''
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +26,7 @@ if __name__ == '__main__':
         day_diff = sys.argv[2]
     if len(sys.argv) == 2:
         rconf_file = sys.argv[1]
-        day_diff = 7
+        day_diff = str(7)
 
     if not os.path.isfile(os.path.join(DICT_DIR, rconf_file)):
             print('not found rsync dict file')
@@ -38,8 +37,8 @@ if __name__ == '__main__':
     indx = 0    # position of file   file:[1,0]
     for group in dict['group']:
         target_path = group[2]
-        option = " -mtime -" + day_diff 
-        recent_list = os.popen("find " + target_path + option)
+        option = " -mtime -" + day_diff
+        recent_list = os.popen("find " + os.path.normpath(target_path) + os.path.sep + option)
 
 
         for file in recent_list:
